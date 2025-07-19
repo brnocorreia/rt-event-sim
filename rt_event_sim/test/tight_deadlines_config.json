@@ -5,7 +5,7 @@
       "name": "T1_Urgent",
       "wcet": 2,
       "period": 8,
-      "deadline": 4
+      "deadline": 8
     },
     {
       "name": "T2_Long", 
@@ -16,7 +16,7 @@
     {
       "name": "T3_Medium",
       "wcet": 3,
-      "period": 12,
+      "period": 8,
       "deadline": 8
     }
   ]

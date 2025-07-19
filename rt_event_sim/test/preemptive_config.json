@@ -5,7 +5,7 @@
       "name": "T1_HighPriority",
       "wcet": 3,
       "period": 12,
-      "deadline": 6
+      "deadline": 12
     },
     {
       "name": "T2_LowPriority", 
