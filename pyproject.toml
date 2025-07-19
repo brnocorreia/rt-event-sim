@@ -14,3 +14,8 @@ rt-event-sim = "rt_event_sim.main:main"
 
 [tool.uv]
 package = true
+
+[dependency-groups]
+dev = [
+    "ruff>=0.12.4",
+]
