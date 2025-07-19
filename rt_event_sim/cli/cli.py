@@ -132,13 +132,12 @@ def validate(
         table.add_column("Utilization", style="magenta")
 
         scheduler = create_scheduler(algorithm)
-        simulator = Simulator(tasks, scheduler, verbose=False)
 
         console.print(
             f"Checking if Scheduler {scheduler.name} can scale for the given tasks..."
         )
 
-        is_scalable, message = scheduler.is_scalable(tasks)
+        is_scalable, message = scheduler.is_scalable(tasks, console)
         if is_scalable:
             console.print(
                 "[bold green]✓ Scheduler can scale for the given tasks[/bold green]"
@@ -149,7 +148,7 @@ def validate(
                 "[bold red]⚠ Scheduler cannot scale for the given tasks[/bold red]"
             )
             console.print(f"[bold red]⚠ {message}[/bold red]")
-            raise typer.Exit(1)
+            
 
         total_utilization = 0.0
         for task in tasks:

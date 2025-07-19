@@ -1,0 +1,16 @@
+{
+    "tasks": [
+      {
+        "name": "T1",
+        "wcet": 2,
+        "period": 5,
+        "deadline": 5
+      },
+      {
+        "name": "T2", 
+        "wcet": 4,
+        "period": 7,
+        "deadline": 7
+      }
+    ]
+  } 
