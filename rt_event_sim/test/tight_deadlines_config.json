@@ -1,0 +1,23 @@
+{
+  "horizon": 40,
+  "tasks": [
+    {
+      "name": "T1_Urgent",
+      "wcet": 2,
+      "period": 8,
+      "deadline": 4
+    },
+    {
+      "name": "T2_Long", 
+      "wcet": 6,
+      "period": 20,
+      "deadline": 20
+    },
+    {
+      "name": "T3_Medium",
+      "wcet": 3,
+      "period": 12,
+      "deadline": 8
+    }
+  ]
+} 

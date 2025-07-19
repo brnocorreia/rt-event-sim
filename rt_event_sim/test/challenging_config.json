@@ -1,0 +1,23 @@
+{
+  "horizon": 60,
+  "tasks": [
+    {
+      "name": "T1",
+      "wcet": 3,
+      "period": 7,
+      "deadline": 7
+    },
+    {
+      "name": "T2", 
+      "wcet": 4,
+      "period": 12,
+      "deadline": 12
+    },
+    {
+      "name": "T3",
+      "wcet": 2,
+      "period": 20,
+      "deadline": 20
+    }
+  ]
+} 

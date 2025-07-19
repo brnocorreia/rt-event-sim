@@ -1,0 +1,16 @@
+[project]
+name = "rt-event-sim"
+version = "0.1.0"
+description = "Real-time Event Simulator with EDF and RM scheduling algorithms"
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = [
+    "typer>=0.9.0",
+    "rich>=13.0.0"
+]
+
+[project.scripts]
+rt-event-sim = "rt_event_sim.main:main"
+
+[tool.uv]
+package = true

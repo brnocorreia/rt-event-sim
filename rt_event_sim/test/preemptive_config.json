@@ -1,0 +1,17 @@
+{
+  "horizon": 25,
+  "tasks": [
+    {
+      "name": "T1_HighPriority",
+      "wcet": 3,
+      "period": 12,
+      "deadline": 6
+    },
+    {
+      "name": "T2_LowPriority", 
+      "wcet": 8,
+      "period": 20,
+      "deadline": 20
+    }
+  ]
+} 
