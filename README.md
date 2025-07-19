@@ -11,6 +11,7 @@ A discrete-time simulator for real-time scheduling algorithms including Earliest
 - Algorithm comparison
 - Verbose execution tracing
 - Timeline visualization
+- Event Driven Time Execution Simulation
 
 ## Installation
 
