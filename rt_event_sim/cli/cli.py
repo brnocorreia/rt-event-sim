@@ -6,7 +6,6 @@ from typing import List, Optional
 import typer
 from rich.console import Console
 from rich.table import Table
-from rich.panel import Panel
 
 from ..models import Task
 from ..schedulers import create_scheduler
@@ -45,6 +44,12 @@ def run(
         "--preemptive/--non-preemptive",
         help="Enable/disable preemptive scheduling (default: preemptive)",
     ),
+    event_driven: bool = typer.Option(
+        False,
+        "--event-driven",
+        "-e",
+        help="Enable event-driven simulation",
+    ),
 ):
     try:
         config = _load_config(config_file)
@@ -55,14 +60,17 @@ def run(
         simulator = Simulator(tasks, scheduler, verbose=verbose)
 
         mode = "Preemptive" if preemptive else "Non-preemptive"
-        console.print(f"\n[bold blue]Real-time Simulation Starting[/bold blue]")
+        console.print("\n[bold blue]Real-time Simulation Starting[/bold blue]")
         console.print(
             f"Algorithm: [green]{scheduler.name}[/green] ([cyan]{mode}[/cyan])"
         )
         console.print(f"Tasks: [yellow]{len(tasks)}[/yellow]")
         console.print(f"Horizon: [yellow]{sim_horizon}[/yellow] time units\n")
 
-        result = simulator.run(sim_horizon, preemptive=preemptive)
+        if event_driven:
+            result = simulator.run_event_driven(sim_horizon, preemptive=preemptive)
+        else:
+            result = simulator.run(sim_horizon, preemptive=preemptive)
 
         _display_results(result, timeline)
 
@@ -86,7 +94,7 @@ def compare(
         algorithms = ["edf", "rm"]
         results = []
 
-        console.print(f"\n[bold blue]Comparing Scheduling Algorithms[/bold blue]")
+        console.print("\n[bold blue]Comparing Scheduling Algorithms[/bold blue]")
         console.print(f"Tasks: [yellow]{len(tasks)}[/yellow]")
         console.print(f"Horizon: [yellow]{sim_horizon}[/yellow] time units\n")
 
@@ -121,7 +129,7 @@ def validate(
         config = _load_config(config_file)
         tasks = _parse_tasks(config["tasks"])
 
-        console.print(f"\n[bold green]Configuration Valid![/bold green]")
+        console.print("\n[bold green]Configuration Valid![/bold green]")
         console.print(f"Found {len(tasks)} tasks:")
 
         table = Table()
