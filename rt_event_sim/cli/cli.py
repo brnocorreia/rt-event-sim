@@ -10,6 +10,7 @@ from rich.table import Table
 from ..models import Task
 from ..schedulers import create_scheduler
 from ..simulation import Simulator
+from ..visualization import plot_gantt_chart, plot_comparison_gantt
 
 app = typer.Typer(
     name="rt-event-sim",
@@ -50,6 +51,18 @@ def run(
         "-e",
         help="Enable event-driven simulation",
     ),
+    plot: bool = typer.Option(
+        False, "--plot", "-p", help="Generate a Gantt chart visualization"
+    ),
+    plot_output: str = typer.Option(
+        "gantt_chart.png", "--plot-output", help="Output file path for the Gantt chart"
+    ),
+    show_deadlines: bool = typer.Option(
+        True, "--deadlines/--no-deadlines", help="Show deadline markers in Gantt chart"
+    ),
+    show_releases: bool = typer.Option(
+        True, "--releases/--no-releases", help="Show release markers in Gantt chart"
+    ),
 ):
     try:
         config = _load_config(config_file)
@@ -73,6 +86,31 @@ def run(
             result = simulator.run(sim_horizon, preemptive=preemptive)
 
         _display_results(result, timeline)
+
+        if plot:
+            console.print("\n[bold blue]Generating Gantt Chart[/bold blue]")
+            console.print(f"Output: [green]{plot_output}[/green]")
+
+            mode = "Preemptive" if preemptive else "Non-preemptive"
+            title = f"{result.algorithm} Scheduling ({mode})"
+
+            plots_dir = Path("plots")
+            plots_dir.mkdir(exist_ok=True)
+            plot_output = plots_dir / Path(plot_output).name
+
+            plot_gantt_chart(
+                result=result,
+                tasks=tasks,
+                show_deadlines=show_deadlines,
+                show_releases=show_releases,
+                save_path=plot_output,
+                title=title,
+                show_interactive=False,
+            )
+
+            console.print(
+                f"[bold green]✓ Gantt chart saved to {plot_output}[/bold green]"
+            )
 
     except Exception as e:
         console.print(f"[bold red]Error:[/bold red] {e}", file=sys.stderr)
@@ -110,6 +148,90 @@ def compare(
                 results.append(result)
 
         _display_comparison(results)
+
+    except Exception as e:
+        console.print(f"[bold red]Error:[/bold red] {e}", file=sys.stderr)
+        raise typer.Exit(1)
+
+
+@app.command()
+def plot(
+    config_file: str = typer.Argument(..., help="Path to JSON configuration file"),
+    algorithm: str = typer.Option(
+        "edf", "--algorithm", "-a", help="Scheduling algorithm to use: 'edf' or 'rm'"
+    ),
+    horizon: Optional[int] = typer.Option(
+        None, "--horizon", "-h", help="Simulation horizon (overrides config file)"
+    ),
+    output: str = typer.Option(
+        "gantt_chart.png", "--output", "-o", help="Output file path for the Gantt chart"
+    ),
+    compare_algorithms: bool = typer.Option(
+        False, "--compare", "-c", help="Compare EDF and RM algorithms in a single chart"
+    ),
+    show_deadlines: bool = typer.Option(
+        True, "--deadlines/--no-deadlines", help="Show deadline markers"
+    ),
+    show_releases: bool = typer.Option(
+        True, "--releases/--no-releases", help="Show release markers"
+    ),
+    preemptive: bool = typer.Option(
+        True,
+        "--preemptive/--non-preemptive",
+        help="Enable/disable preemptive scheduling (default: preemptive)",
+    ),
+):
+    try:
+        config = _load_config(config_file)
+        tasks = _parse_tasks(config["tasks"])
+        sim_horizon = horizon if horizon is not None else config.get("horizon", 100)
+
+        console.print("\n[bold blue]Generating Gantt Chart[/bold blue]")
+        console.print(f"Tasks: [yellow]{len(tasks)}[/yellow]")
+        console.print(f"Horizon: [yellow]{sim_horizon}[/yellow] time units")
+        console.print(f"Output: [green]{output}[/green]\n")
+
+        if compare_algorithms:
+            algorithms = ["edf", "rm"]
+            results = []
+
+            for algo in algorithms:
+                scheduler = create_scheduler(algo)
+                simulator = Simulator(tasks, scheduler, verbose=False)
+                result = simulator.run(sim_horizon, preemptive=preemptive)
+                results.append(result)
+
+                console.print(
+                    f"{result.algorithm}: {result.success_rate:.1f}% success rate"
+                )
+
+            plot_comparison_gantt(
+                results=results, tasks=tasks, save_path=output, show_interactive=False
+            )
+
+        else:
+            scheduler = create_scheduler(algorithm)
+            simulator = Simulator(tasks, scheduler, verbose=False)
+            result = simulator.run(sim_horizon, preemptive=preemptive)
+
+            mode = "Preemptive" if preemptive else "Non-preemptive"
+            title = f"{result.algorithm} Scheduling ({mode})"
+
+            console.print(
+                f"{result.algorithm}: {result.success_rate:.1f}% success rate"
+            )
+
+            plot_gantt_chart(
+                result=result,
+                tasks=tasks,
+                show_deadlines=show_deadlines,
+                show_releases=show_releases,
+                save_path=output,
+                title=title,
+                show_interactive=False,
+            )
+
+        console.print(f"\n[bold green]✓ Gantt chart saved to {output}[/bold green]")
 
     except Exception as e:
         console.print(f"[bold red]Error:[/bold red] {e}", file=sys.stderr)
@@ -156,7 +278,6 @@ def validate(
                 "[bold red]⚠ Scheduler cannot scale for the given tasks[/bold red]"
             )
             console.print(f"[bold red]⚠ {message}[/bold red]")
-            
 
         total_utilization = 0.0
         for task in tasks:

@@ -17,7 +17,7 @@ class Event:
     event_type: EventType
     task: Optional[Task] = None
     job: Optional[Job] = None
-    
+
     def __lt__(self, other):
         if self.time != other.time:
             return self.time < other.time
@@ -131,9 +131,11 @@ class Simulator:
 
         return result
 
-    def run_event_driven(self, horizon: int, preemptive: bool = True) -> SimulationResult:
+    def run_event_driven(
+        self, horizon: int, preemptive: bool = True
+    ) -> SimulationResult:
         self._reset()
-        
+
         if self.verbose:
             mode = "preemptive" if preemptive else "non-preemptive"
             print(f"Starting event-driven {mode} simulation with {self.scheduler.name}")
@@ -144,27 +146,25 @@ class Simulator:
         event_queue = []
         current_job: Optional[Job] = None
         last_time = 0
-        
+
         for task in self.tasks:
-            release_event = Event(
-                time=0,
-                event_type=EventType.JOB_RELEASE,
-                task=task
-            )
+            release_event = Event(time=0, event_type=EventType.JOB_RELEASE, task=task)
             heapq.heappush(event_queue, release_event)
-        
+
         while event_queue and event_queue[0].time < horizon:
             event = heapq.heappop(event_queue)
             current_time = event.time
-            
+
             if current_job and last_time < current_time:
                 execution_time = current_time - last_time
                 current_job.remaining -= execution_time
-                
+
                 if self.verbose:
-                    print(f"Time {last_time}-{current_time}: Executing {current_job.task.name} "
-                          f"for {execution_time} units (remaining: {current_job.remaining})")
-                
+                    print(
+                        f"Time {last_time}-{current_time}: Executing {current_job.task.name} "
+                        f"for {execution_time} units (remaining: {current_job.remaining})"
+                    )
+
                 for t in range(last_time, current_time):
                     self.timeline.append((t, current_job.task.name))
             elif last_time < current_time:
@@ -172,50 +172,62 @@ class Simulator:
                     print(f"Time {last_time}-{current_time}: CPU idle")
                 for t in range(last_time, current_time):
                     self.timeline.append((t, None))
-            
+
             self.current_time = current_time
-            
+
             if event.event_type == EventType.JOB_RELEASE:
                 self._handle_job_release_event(event, event_queue, horizon)
-                
+
                 if preemptive and current_job and self.scheduler.has_jobs():
                     next_job = self.scheduler.get_next_job()
                     if next_job and self._should_preempt(current_job, next_job):
                         if self.verbose:
-                            print(f"Time {current_time}: Preempting {current_job.task.name} with {next_job.task.name}")
+                            print(
+                                f"Time {current_time}: Preempting {current_job.task.name} with {next_job.task.name}"
+                            )
                         self._remove_completion_events(current_job, event_queue)
                         self.scheduler.add_job(current_job)
                         current_job = next_job
-                        self._schedule_completion_event(current_job, event_queue, current_time)
+                        self._schedule_completion_event(
+                            current_job, event_queue, current_time
+                        )
                     else:
                         if next_job:
                             self.scheduler.add_job(next_job)
                 elif not current_job and self.scheduler.has_jobs():
                     current_job = self.scheduler.get_next_job()
                     if current_job:
-                        self._schedule_completion_event(current_job, event_queue, current_time)
-                        
+                        self._schedule_completion_event(
+                            current_job, event_queue, current_time
+                        )
+
             elif event.event_type == EventType.JOB_COMPLETION:
-                if current_job and current_job == event.job and current_job.remaining <= 0:
+                if (
+                    current_job
+                    and current_job == event.job
+                    and current_job.remaining <= 0
+                ):
                     # if self.verbose:
-                        # print(f"Time {current_time}: Job {current_job.job_id} of task {current_job.task.name} completed")
+                    # print(f"Time {current_time}: Job {current_job.job_id} of task {current_job.task.name} completed")
                     self._complete_job(current_job)
                     current_job = None
-                    
+
                     if self.scheduler.has_jobs():
                         current_job = self.scheduler.get_next_job()
                         if current_job:
-                            self._schedule_completion_event(current_job, event_queue, current_time)
-            
+                            self._schedule_completion_event(
+                                current_job, event_queue, current_time
+                            )
+
             last_time = current_time
-        
+
         if current_job and last_time < horizon:
             execution_time = horizon - last_time
             current_job.remaining -= execution_time
-            
+
             for t in range(last_time, horizon):
                 self.timeline.append((t, current_job.task.name))
-                
+
             if current_job.remaining <= 0:
                 self._complete_job(current_job)
         elif last_time < horizon:
@@ -236,8 +248,10 @@ class Simulator:
             self._print_summary(result)
 
         return result
-    
-    def _handle_job_release_event(self, event: Event, event_queue: List[Event], horizon: int):
+
+    def _handle_job_release_event(
+        self, event: Event, event_queue: List[Event], horizon: int
+    ):
         task = event.task
         job = Job(
             task=task,
@@ -248,33 +262,35 @@ class Simulator:
         )
         self.job_counter += 1
         self.scheduler.add_job(job)
-        
+
         if self.verbose:
-            print(f"Time {self.current_time}: Released job {job.job_id} of task {task.name} "
-                  f"(deadline: {job.absolute_deadline})")
-        
+            print(
+                f"Time {self.current_time}: Released job {job.job_id} of task {task.name} "
+                f"(deadline: {job.absolute_deadline})"
+            )
+
         next_release_time = self.current_time + task.period
         if next_release_time < horizon:
             next_release_event = Event(
-                time=next_release_time,
-                event_type=EventType.JOB_RELEASE,
-                task=task
+                time=next_release_time, event_type=EventType.JOB_RELEASE, task=task
             )
             heapq.heappush(event_queue, next_release_event)
-    
-    def _schedule_completion_event(self, job: Job, event_queue: List[Event], current_time: int):
+
+    def _schedule_completion_event(
+        self, job: Job, event_queue: List[Event], current_time: int
+    ):
         completion_time = current_time + job.remaining
         completion_event = Event(
-            time=completion_time,
-            event_type=EventType.JOB_COMPLETION,
-            job=job
+            time=completion_time, event_type=EventType.JOB_COMPLETION, job=job
         )
         heapq.heappush(event_queue, completion_event)
-        
+
     def _remove_completion_events(self, job: Job, event_queue: List[Event]):
-        event_queue[:] = [event for event in event_queue if not (
-            event.event_type == EventType.JOB_COMPLETION and event.job == job
-        )]
+        event_queue[:] = [
+            event
+            for event in event_queue
+            if not (event.event_type == EventType.JOB_COMPLETION and event.job == job)
+        ]
         heapq.heapify(event_queue)
 
     def _reset(self):

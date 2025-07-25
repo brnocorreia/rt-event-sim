@@ -8,6 +8,7 @@ dependencies = [
     "typer>=0.9.0",
     "rich>=13.0.0",
     "pre-commit>=3.5.0",
+    "matplotlib>=3.5.0",
 ]
 
 [project.scripts]
@@ -17,6 +18,4 @@ rt-event-sim = "rt_event_sim.main:main"
 package = true
 
 [dependency-groups]
-dev = [
-    "ruff>=0.12.4",
-]
+dev = ["ruff>=0.12.4"]

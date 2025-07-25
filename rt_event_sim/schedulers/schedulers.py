@@ -15,6 +15,7 @@ from ..models import Job
 
 console = Console()
 
+
 class Scheduler(ABC):
     def __init__(self):
         self.ready_queue: List[Tuple[int, int, Job]] = []
@@ -48,7 +49,9 @@ class Scheduler(ABC):
         pass
 
     @abstractmethod
-    def is_scalable(self, tasks: List[Task], console: Console = None) -> Tuple[bool, str]:
+    def is_scalable(
+        self, tasks: List[Task], console: Console = None
+    ) -> Tuple[bool, str]:
         """
         Check if the scheduler is scalable for the given tasks.
         """
@@ -63,7 +66,9 @@ class EDFScheduler(Scheduler):
     def name(self) -> str:
         return "Earliest Deadline First (EDF)"
 
-    def is_scalable(self, tasks: List[Task], console: Console = None) -> Tuple[bool, str]:
+    def is_scalable(
+        self, tasks: List[Task], console: Console = None
+    ) -> Tuple[bool, str]:
         """
         Check if the scheduler is scalable for the given tasks.
 
@@ -86,7 +91,9 @@ class RMScheduler(Scheduler):
     def name(self) -> str:
         return "Rate Monotonic (RM)"
 
-    def is_scalable(self, tasks: List[Task], console: Console = None) -> Tuple[bool, str]:
+    def is_scalable(
+        self, tasks: List[Task], console: Console = None
+    ) -> Tuple[bool, str]:
         """
         Check if the scheduler is scalable for the given tasks.
 
@@ -122,17 +129,23 @@ class RMScheduler(Scheduler):
                 )
 
                 if new_response_time > task.deadline:
-                    console.print(f"[bold red]⚠ New response time {new_response_time} is greater than the deadline {task.deadline}[/bold red]")
+                    console.print(
+                        f"[bold red]⚠ New response time {new_response_time} is greater than the deadline {task.deadline}[/bold red]"
+                    )
                     return False, RM_RTA_NON_SCALABILITY_MESSAGE
 
                 if new_response_time == response_time:
-                    console.print(f"[bold green]✓ Response time {response_time} is equal to the new response time {new_response_time}[/bold green]")
+                    console.print(
+                        f"[bold green]✓ Response time {response_time} is equal to the new response time {new_response_time}[/bold green]"
+                    )
                     break
 
                 response_time = new_response_time
 
             if response_time > task.deadline:
-                console.print(f"[bold red]⚠ Response time {response_time} is greater than the deadline {task.deadline}[/bold red]")
+                console.print(
+                    f"[bold red]⚠ Response time {response_time} is greater than the deadline {task.deadline}[/bold red]"
+                )
                 return False, RM_RTA_NON_SCALABILITY_MESSAGE
 
         return True, RM_RTA_SCALABILITY_MESSAGE
