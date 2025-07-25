@@ -94,7 +94,7 @@ def run(
             mode = "Preemptive" if preemptive else "Non-preemptive"
             title = f"{result.algorithm} Scheduling ({mode})"
 
-            plots_dir = Path("plots")
+            plots_dir = Path(__file__).parent.parent / "plots"
             plots_dir.mkdir(exist_ok=True)
             plot_output = plots_dir / Path(plot_output).name
 
